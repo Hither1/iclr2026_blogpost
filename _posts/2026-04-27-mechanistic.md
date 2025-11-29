@@ -50,7 +50,7 @@ toc:
   - name: 
   - name: 
     subsections:
-      - name: Interactive Figures
+      - name: 
   - name: 
   - name: 
   - name: 
@@ -79,20 +79,168 @@ _styles: >
 ---
 
 
+## Introduction
+Large language models (LLMs) have improved dramatically in recent years, largely by scaling their capacity and the quantity of training data (Kaplan et al., 2020; OpenAI, 2025; DeepMind,
+2025; Anthropic, 2025; Grattafiori et al., 2024). For instance, training the Llama 3.1 405B model required more than 1025 FLOPs and utilized up to 16,000 H100 GPUs (Grattafiori
+et al., 2024). Scaling these models involves not only the initial, compute-intensive pretraining
+phase but also frequent retraining as new data, algorithms, or architectures emerge, as well
+as post-training protocols that prepare the model for inference/deployment.
+To reduce these computational burdens, recent hardware advancements have introduced
+native support for lower-precision computations, such as FP8 training in NVIDIA H100
+GPUs (Micikevicius et al., 2022b; Noune et al., 2022). Hardware accelerators powered by
+NVIDIA’s Blackwell architecture further extend these capabilities with standardized, sharedscale Microscaling (MX) formats like MXFP8 and MXFP6 (NVIDIA, 2025). These formats
+store a per-block shared scale, which expands the effective dynamic range with minimal
+memory overhead, while simultaneously enabling GEMMs at lower precision (Rouhani et al.,
+2023; Darvish Rouhani et al., 2023b). While pretraining is typically done in 16 or 32-bit
+precision, some quantization schemes are already seeing industry adoption; for example,
+DeepSeek-V3 employs tile-wise FP8 quantization within large tensors (Liu et al., 2024), while
+Cohere’s Command A model was trained in FP8 while reserving higher-precision operations
+for activation functions and attention mechanisms (Cohere et al., 2025). At an even larger scale, the Llama-4 series of models is reported to have been pretrained in FP8 precision
+across nearly 32,000 GPUs (Meta, 2025). On the deployment side, methods like QAT and
+mixed-precision fine-tuning further underscore the importance of understanding low-precision
+training dynamics (Jacob et al., 2017; Abdolrashidi et al., 2021; Shao et al., 2024).
+Two primary challenges accompany the adoption of low-precision formats for training. First,
+there is a potential performance tradeoff, where reducing precision may result in degradation
+of loss and downstream accuracy, which can be characterized through scaling laws that account
+for both compute and precision (Kumar et al., 2024). Second, instabilities during training can
+occur, often manifesting as abrupt spikes in the loss curve that disrupt convergence (Fishman
+et al., 2024; Lee et al., 2025). When these instabilities push optimization into regions from
+which recovery is impossible, they obstruct our ability to extract valid scaling laws, making
+it impossible to even assess the tradeoffs introduced by low-precision training.
+In this work, we set out to understand the training dynamics of low-precision MX precision
+formats to identify format prescriptions for language model training on next-generation
+hardware. However, like prior observations on (albeit non-MX) low-precision training
+by Fishman et al. (2024); Lee et al. (2025), we found that training frequently became
+unstable, particularly for larger, compute-intensive models. The instabilities are pervasive,
+emerging across a broad range of activation functions, model scales, quantization formats,
+and hyperparameter settings.
+Because large-scale language model (LM) sweeps are computationally intensive and involve
+many entangled components, we turn to a controlled synthetic setting to understand the
+origin of these instabilities. Specifically, we present a residual multi-layer perceptron (MLP)
+model that captures key architectural components of the LM, and allows us to identify
+conditions under which training becomes unstable. In particular, we are able to perform
+hyperparamter sweeps, ablations across MX configurations, quantization schemes (e.g.,
+forward-only vs. full quantization), and activation functions, and analyze their effects on
+stability.
+Our findings support a phenomenological explanation in which training instabilities primarily
+arise from systematic bias in gradient estimates introduced by quantization. We find that the
+primary contribution to this bias is the quantization of the layer normalization (layernorm)
+affine weights, whose values often become tightly clustered over the course of training. When
+the values within a block converge too closely, division by the shared block scale can clamp
+all values in that block to the largest representable number, destabilizing training. We verify
+that this mechanism is not limited to synthetic settings but also emerges in the LM setting
+by evaluating mitigation strategies to stabilize LM training, including disabling layernorm
+quantization and using high precision in selective parts of the network computation.
 
 
- `$$` and place it as a separate paragraph.
-Here is an example:
 
-$$
+
+
+
+
+
+<!-- $$
 \left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)
-$$
+$$ -->
 
-Note that MathJax 3 is [a major re-write of MathJax](https://docs.mathjax.org/en/latest/upgrading/whats-new-3.0.html)
-that brought a significant improvement to the loading and rendering speed, which is now
+
 [on par with KaTeX](http://www.intmath.com/cg5/katex-mathjax-comparison.php).
 
-## Images and Figures
+## Related Work
+
+### Low-Precision Instabilities
+
+
+### Review of MX Formats and Experimental Approach
+
+
+## LLM Experiments
+### Setup
+
+### Instabilities in Low Precision
+
+
+## Synthetic Experiments
+
+### Setup
+
+
+
+
+
+### The Effect of Activation Functions and layernorms
+
+
+
+
+## Overflow Dynamics
+
+
+
+
+### Overflow Issues with layernorms
+
+
+
+
+
+### Potential Mitigations
+To clearly establish causality of which components can (de)stabilize training, we ask whether
+an impending divergence can be averted by in-situ interventions to the training recipe. 
+Figure 4 tracks a configuration that is stable in FP32 but diverges in MXFP8 E4M3. This
+setting corresponds to the previously described student-teacher scenario with four layers and
+model dimension dmodel = 512. The instability starts approximately at step 5090 and we
+consider interventions just before the instability, at step 5080, and well before the instability,
+at step 4500. For each intervention we keep the random seed, model state, and batch sequence
+identical, so the training state at the intervention step is the same as in the baseline run, so
+any divergence afterward is therefore solely attributable to the intervention.
+
+
+Key Takewaways The dominant MX precision-specific bias comes from overflow of
+clustered layer-norm affine weights (and a small fraction of activations). Our intervention
+experiments show that raising precision in key parts of the computation, such as increasing
+the precision of layer norms or activations, can greatly improve stability.
+
+
+
+##  Stabilization Strategies in LM Setting
+Motivated by the effective mitigations observed in our synthetic experiments, we return
+to the language-model (OLMo) setting and consider two training strategies: (1) retaining
+bfloat16 as the element format for activations and layer norms, and (2) applying MX
+quantization only to the forward pass. We emphasize that these are diagnostic and not
+production-ready mitigations. Keeping activations in bfloat16 generally yields no computethroughput gain on hardware where the MMA executes in bfloat16, because mixed-operand
+kernels typically upcast the lower-precision operand to the MMA precision. Conversely,
+downcasting activations to low precision during the matmul would reintroduce the very
+instabilities we aim to avoid. We defer a more fine-grained study of which layers truly require
+high-precision activations to future work. Likewise, quantizing only the forward pass can at
+most accelerate the forward fraction of training. Under standard assumptions, the backward
+step costs roughly twice the forward, so the idealized wall-clock speedup is capped near
+∼33%.
+
+In both cases, we find that training remains stable across all FP8 configurations. Table 1
+reports validation loss differences relative to full-bfloat16 baselines. MXFP8 E4M3 weights
+paired with bfloat16 activations in particular match full-precision performance across all
+tested model sizes. In Appendix G, we study how these results scale with compute and fit
+valid Chinchilla-style scaling laws. Full loss curves and scaling law fits for both mitigation
+strategies compared to bfloat16 baselines are also provided in Appendix G.
+
+
+
+## Conclusion
+We showed that training LLMs in shared-scale/MX configurations can lead to sharp, unrecoverable instabilities. Using large-scale LLM sweeps and a simple proxy model trained
+on synthetic data, we isolate a failure mode of quantization-induced gradient bias, where
+shared-scale clamping (particularly of layer-norm affine weights and to a lesser extent, other
+activations) injects gradient noise that ultimately destabilizes training. We evaluated several
+diagnostic mitigations, and found that stability can be preserved using higher precision in
+selective parts of the network computation.
+Looking ahead, continued hardware advances will expand the frontier of what is computationally feasible. Some concrete directions include: extending our proxy model to include
+mixture-of-experts with many layers, and other transformer-specific components to better
+predict instabilities; developing a clear theoretical picture of instabilities in optimization (see
+Appendix B); and designing new blockwise scaling schemes such as in Mishra et al. (2025)
+that adapt to skewed or tightly clustered distributions.
+
+
+
 
 
 <!-- ```markdown
@@ -102,8 +250,7 @@ that brought a significant improvement to the loading and rendering speed, which
 
 {% include figure.liquid path="assets/img/2026-04-27-distill-example/iclr.png" class="img-fluid" %}
 
-To ensure that there are no namespace conflicts, you must save your asset to your unique directory
-`/assets/img/2025-04-27-[SUBMISSION NAME]` within your submission.
+
 
 
 <!-- <div class="row mt-3">
@@ -141,23 +288,16 @@ To ensure that there are no namespace conflicts, you must save your asset to you
 
 
 
-Note that we will be using plotly for this demo, but anything built off of HTML should work
-(**no extra javascript is allowed!**).
-All that's required is for you to export your figure into HTML format, and make sure that the file
-exists in the `assets/html/[SUBMISSION NAME]/` directory in this repository's root directory.
-To embed it into any page, simply insert the following code anywhere into your page.
+(**no extra javascript is allowed!**)
 
 ```markdown
 {% raw %}{% include [FIGURE_NAME].html %}{% endraw %}
 ```
 
-For example, the following code can be used to generate the figure underneath it.
 
 ```python
 import pandas as pd
 import plotly.express as px
-
-df = pd.read_csv('https://raw.githubusercontent.com/plotly/datasets/master/earthquakes-23k.csv')
 
 fig = px.density_mapbox(
     df, lat='Latitude', lon='Longitude', z='Magnitude', radius=10,
@@ -189,40 +329,26 @@ fig.write_html('./assets/html/2026-04-27-distill-example/plotly_demo_1.html')
   <iframe src="{{ 'assets/html/2026-04-27-distill-example/plotly_demo_1.html' | relative_url }}" frameborder='0' scrolling='no' height="600px" width="100%"></iframe>
 </div>
 
+<d-cite key="gregor2015draw"></d-cite> 
 
-The citation is presented inline like this: <d-cite key="gregor2015draw"></d-cite> (a number that displays more information on hover).
-If you have an appendix, a bibliography is automatically created and populated in it.
 
-Distill chose a numerical inline citation style to improve readability of citation dense articles and because many of the benefits of longer citations are obviated by displaying more information on hover.
-However, we consider it good style to mention author last names if you discuss something at length and it fits into the flow well — the authors are human and it’s nice for them to have the community associate them with their work.
 
----
+<d-footnote></d-footnote>
 
-## Footnotes
+##
 
-Just wrap the text you would like to show up in a footnote in a `<d-footnote>` tag.
-The number of the footnote will be automatically generated.<d-footnote>This will become a hoverable footnote.</d-footnote>
 
----
-
-## Code Blocks
-
-This theme implements a built-in Jekyll feature, the use of Rouge, for syntax highlighting.
-It supports more than 100 languages.
-This example is in C++.
-All you have to do is wrap your code in a liquid tag:
 
 {% raw  %}
-{% highlight c++ linenos %} <br/> code code code <br/> {% endhighlight %}
+{% highlight c++ linenos %} <br/> coe <br/> {% endhighlight %}
 {% endraw %}
 
-The keyword `linenos` triggers display of line numbers. You can try toggling it on or off yourself below:
+ `linenos` 
 
 {% highlight c++ %}
 
-int main(int argc, char const \*argv[])
+int main(int argc, char ct \*argv[])
 {
-string myString;
 
     cout << "input a string: ";
     getline(cin, myString);
@@ -241,14 +367,9 @@ string myString;
 
 {% endhighlight %}
 
----
+ [mermaid.js](https://mermaid-js.github.io/mermaid/){:target="\_blank"} directly.
+ [mermaid](https://mermaid-js.github.io/mermaid/){:target="\_blank"} syntax.
 
-## Diagrams
-
-This theme supports generating various diagrams from a text description using [mermaid.js](https://mermaid-js.github.io/mermaid/){:target="\_blank"} directly.
-Below, we generate examples of such diagrams using [mermaid](https://mermaid-js.github.io/mermaid/){:target="\_blank"} syntax.
-
-**Note:** To enable mermaid diagrams, you need to add the following to your post's front matter:
 
 ```yaml
 mermaid:
@@ -256,8 +377,6 @@ mermaid:
   zoomable: true # optional, for zoomable diagrams
 ```
 
-The diagram below was generated by the following code:
-
 
 ````
 ```mermaid
@@ -277,46 +396,26 @@ sequenceDiagram
     John-->>Alice: Great!
 ```
 
----
 
-## Tweets
 
-An example of displaying a tweet:
-{% twitter https://twitter.com/rubygems/status/518821243320287232 %}
-
-An example of pulling from a timeline:
 {% twitter https://twitter.com/jekyllrb maxwidth=500 limit=3 %}
 
-For more details on using the plugin visit: [jekyll-twitter-plugin](https://github.com/rob-murray/jekyll-twitter-plugin)
-
----
-
-## Blockquotes
 
 <blockquote>
-    We do not grow absolutely, chronologically. We grow sometimes in one dimension, and not in another, unevenly. We grow partially. We are relative. We are mature in one realm, childish in another.
-    —Anais Nin
 </blockquote>
 
----
 
-## Layouts
-
-The main text column is referred to as the body.
-It is the assumed layout of any direct descendants of the `d-article` element.
+ `d-article` 
 
 <div class="fake-img l-body">
   <p>.l-body</p>
 </div>
 
-For images you want to display a little larger, try `.l-page`:
+ try `.l-page`:
 
 <div class="fake-img l-page">
   <p>.l-page</p>
 </div>
-
-All of these have an outset variant if you want to poke out from the body text a little bit.
-For instance:
 
 <div class="fake-img l-body-outset">
   <p>.l-body-outset</p>
@@ -326,9 +425,7 @@ For instance:
   <p>.l-page-outset</p>
 </div>
 
-Occasionally you’ll want to use the full browser width.
-For this, use `.l-screen`.
-You can also inset the element a little from the edge of the browser by using the inset variant.
+ `.l-screen`.
 
 <div class="fake-img l-screen">
   <p>.l-screen</p>
@@ -337,8 +434,7 @@ You can also inset the element a little from the edge of the browser by using th
   <p>.l-screen-inset</p>
 </div>
 
-The final layout is for marginalia, asides, and footnotes.
-It does not interrupt the normal flow of `.l-body`-sized text except on mobile screen sizes.
+`.l-body`
 
 <div class="fake-img l-gutter">
   <p>.l-gutter</p>
@@ -346,62 +442,47 @@ It does not interrupt the normal flow of `.l-body`-sized text except on mobile s
 
 ---
 
-## Other Typography?
 
-Emphasis, aka italics, with _asterisks_ (`*asterisks*`) or _underscores_ (`_underscores_`).
+ _asterisks_ (`*asterisks*`) or _underscores_ (`_underscores_`).
 
-Strong emphasis, aka bold, with **asterisks** or **underscores**.
+ **asterisks** or **underscores**.
 
-Combined emphasis with **asterisks and _underscores_**.
+ **asterisks and _underscores_**.
 
-Strikethrough uses two tildes. ~~Scratch this.~~
 
-1. First ordered list item
-2. Another item
 
-- Unordered sub-list.
+1. 
+2. 
 
-1. Actual numbers don't matter, just that it's a number
-   1. Ordered sub-list
-2. And another item.
+- 
 
-   You can have properly indented paragraphs within list items. Notice the blank line above, and the leading spaces (at least one, but we'll use three here to also align the raw Markdown).
+1. 
+   1. 
+2. 
+  
 
-   To have a line break without a paragraph, you will need to use two trailing spaces.
-   Note that this line is separate, but within the same paragraph.
-   (This is contrary to the typical GFM line break behavior, where trailing spaces are not required.)
+- 
 
-- Unordered lists can use asterisks
+* 
 
-* Or minuses
+- 
 
-- Or pluses
 
-[I'm an inline-style link](https://www.google.com)
 
-[I'm an inline-style link with title](https://www.google.com "Google's Homepage")
-
-[I'm a reference-style link][Arbitrary case-insensitive reference text]
+<!-- [](https://www.google.com "Google's Homepage") -->
 
 [I'm a relative reference to a repository file](../blob/master/LICENSE)
 
 [You can use numbers for reference-style link definitions][1]
 
-Or leave it empty and use the [link text itself].
 
-URLs and URLs in angle brackets will automatically get turned into links.
-http://www.example.com or <http://www.example.com> and sometimes
-example.com (but not on Github, for example).
-
-Some text to show that the reference links can follow later.
 
 [arbitrary case-insensitive reference text]: https://www.mozilla.org
 [1]: http://slashdot.org
 [link text itself]: http://www.reddit.com
 
-Here's our logo (hover to see the title text):
 
-Inline-style:
+
 ![alt text](https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png "Logo Title Text 1")
 
 Reference-style:
@@ -416,17 +497,10 @@ var s = "JavaScript syntax highlighting";
 alert(s);
 ```
 
-```python
-s = "Python syntax highlighting"
-print(s)
+```
+<b>tag</b>.
 ```
 
-```
-No language indicated, so no syntax highlighting.
-But let's throw in a <b>tag</b>.
-```
-
-Colons can be used to align columns.
 
 | Tables        |      Are      |  Cool |
 | ------------- | :-----------: | ----: |
@@ -434,25 +508,16 @@ Colons can be used to align columns.
 | col 2 is      |   centered    |   $12 |
 | zebra stripes |   are neat    |    $1 |
 
-There must be at least 3 dashes separating each header cell.
-The outer pipes (|) are optional, and you don't need to make the
-raw Markdown line up prettily. You can also use inline Markdown.
+
+
 
 | Markdown | Less      | Pretty     |
 | -------- | --------- | ---------- |
 | _Still_  | `renders` | **nicely** |
 | 1        | 2         | 3          |
 
-> Blockquotes are very handy in email to emulate reply text.
-> This line is part of the same quote.
 
-Quote break.
 
-> This is a very long line that will still be quoted properly when it wraps. Oh boy let's keep writing to make sure this is long enough to actually wrap for everyone. Oh, you can _put_ **Markdown** into a blockquote.
+> you can _put_ **Markdown** 
 
-Here's a line for us to start with.
 
-This line is separated from the one above by two newlines, so it will be a _separate paragraph_.
-
-This line is also a separate paragraph, but...
-This line is only separated by a single newline, so it's a separate line in the _same paragraph_.
