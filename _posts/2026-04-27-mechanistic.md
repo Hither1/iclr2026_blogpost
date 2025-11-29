@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: A Mechanistic Analysis of Low-Precision Instabilities in Microscaling Formats
-description: Training large language models is expensive and compute-bound, and it must be repeated as models scale, algorithms improve, and new data is collected. To address this, next-generation hardware accelerators like NVIDIA’s Blackwell increasingly support lower-precision arithmetic formats, including Microscaling (MX) formats. In this work, we investigate the challenges and viability of block-scaled precision formats during model training. Across a broad sweep of weight-activation precision combinations and compute budgets from $$ 2 \times 10^{17} $$ to $$ 4.8 \times 10^{19} $$ FLOPs, we generally observe that training in MX formats exhibits sharp, stochastic instabilities in the loss, particularly at larger compute scales. To explain this phenomenon, we conduct controlled experiments and ablations on a smaller proxy model that exhibits instability behavior similar to the language model, sweeping across architectural settings, hyperparameters, and precision formats. These experiments motivate a simple model in which multiplicative gradient bias introduced by the quantization of layer-norm affine parameters and a small fraction of activations can trigger runaway divergence. Through _in situ_ intervention experiments on our proxy model, we demonstrate that instabilities can be averted or delayed by modifying precision schemes mid-training. Guided by these findings, we evaluate stabilization strategies in the LLM setting and show that certain hybrid configurations recover performance competitive with full-precision training.
+description: Training large language models is expensive and compute-bound, and it must be repeated as models scale, algorithms improve, and new data is collected. To address this, next-generation hardware accelerators like NVIDIA’s Blackwell increasingly support lower-precision arithmetic formats, including Microscaling (MX) formats. In this work, we investigate the challenges and viability of block-scaled precision formats during model training. Across a broad sweep of weight-activation precision combinations and compute budgets from $ 2 \times 10^{17} $ to $ 4.8 \times 10^{19} $ FLOPs, we generally observe that training in MX formats exhibits sharp, stochastic instabilities in the loss, particularly at larger compute scales. To explain this phenomenon, we conduct controlled experiments and ablations on a smaller proxy model that exhibits instability behavior similar to the language model, sweeping across architectural settings, hyperparameters, and precision formats. These experiments motivate a simple model in which multiplicative gradient bias introduced by the quantization of layer-norm affine parameters and a small fraction of activations can trigger runaway divergence. Through _in situ_ intervention experiments on our proxy model, we demonstrate that instabilities can be averted or delayed by modifying precision schemes mid-training. Guided by these findings, we evaluate stabilization strategies in the LLM setting and show that certain hybrid configurations recover performance competitive with full-precision training.
 date: 2026-04-27
 future: true
 htmlwidgets: true
@@ -88,8 +88,7 @@ native support for lower-precision computations, such as FP8 training in NVIDIA 
 GPUs <d-cite key="micikevicius2022fp8formatsdeeplearning, noune20228bitnumericalformatsdeep"></d-cite>. Hardware accelerators powered by
 NVIDIA’s Blackwell architecture further extend these capabilities with standardized, sharedscale Microscaling (MX) formats like MXFP8 and MXFP6 (NVIDIA, 2025). These formats
 store a per-block shared scale, which expands the effective dynamic range with minimal
-memory overhead, while simultaneously enabling GEMMs at lower precision (Rouhani et al.,
-2023; Darvish Rouhani et al., 2023b). While pretraining is typically done in 16 or 32-bit
+memory overhead, while simultaneously enabling GEMMs at lower precision <d-cite key="rouhani2023microscaling, darvish2023shared"></d-cite>. While pretraining is typically done in 16 or 32-bit
 precision, some quantization schemes are already seeing industry adoption; for example,
 DeepSeek-V3 employs tile-wise FP8 quantization within large tensors <d-cite key="liu2024deepseek"></d-cite>, while
 Cohere’s Command A model was trained in FP8 while reserving higher-precision operations
@@ -166,10 +165,10 @@ instabilities in LLMs.
 MX formats are a class of low-precision numerical representations designed to enhance the
 efficiency of deep learning models <d-cite key="ocp_mx, rouhani2023microscaling"></d-cite>.
 We defer a detailed review of the MX scheme to Appendix A. To summarize, we represent
-a block of k values, $$ {Vi}k_{i=1} $$, using a single shared scale factor X and k corresponding
+a block of $ k $ values, $ {Vi}k_{i=1} $, using a single shared scale factor $ X $ and $ k $ corresponding
 low-precision elements {Pi} where the Pi are obtained by casting Vi/X to the specified
-low-precision format. We present results for a block size k = 32 to match what will be
-hardware supported. The scale X is calculated using $$ X = 2⌊log2 (maxi(|Vi|))⌋−emax elem $$ where
+low-precision format. We present results for a block size $ k = 32 $ to match what will be
+hardware supported. The scale $ X $ is calculated using $ X = 2⌊log2 (maxi(|Vi|))⌋−emax elem $ where
 $$ emax elem $$ is the exponent of the largest normal number representable in the chosen element
 data format.
 In our experiments, we quantize both weights and activations using these MX formats using
@@ -186,12 +185,12 @@ weights and activations, including two FP6 variants (E3M2, E2M3), two FP8 varian
 E5M2), and a bfloat16 baseline. Each configuration applies full quantization to both forward
 and backward passes to both weights and activations, as implemented in the Microscaling
 library <d-cite key="mx_library"></d-cite>. For each format, we train approximately 70 models1
-spanning compute budgets from 2 × 1017 to 4 × 1019 FLOPs. Model sizes range from ∼20M to
+spanning compute budgets from $ 2 × 10^{17} $ to $ 4 × 10^{19} $ FLOPs. Model sizes range from ∼20M to
 ∼1.7B parameters. Token counts are determined using an adapted version of the FLOP
-accounting code from <d-cite key="brandfonbrener2024loss"></d-cite> Brandfonbrener et al. (2024), originally developed for OLMo scaling
+accounting code from <d-cite key="brandfonbrener2024loss"></d-cite>, originally developed for OLMo scaling
 law experiments. Token-to-parameter ratios in our sweep range from approximately 2 to
-1.   Models are trained on the Fineweb-Edu dataset Penedo et al. (2024) <d-cite key="penedo2024the"></d-cite> and the StarCoder
-dataset Li et al. (2023) <d-cite key="li2023starcoder"></d-cite>, with the longest runs trained on 35B tokens and the shortest runs
+1.   Models are trained on the Fineweb-Edu dataset <d-cite key="penedo2024the"></d-cite> and the StarCoder
+dataset <d-cite key="li2023starcoder"></d-cite>, with the longest runs trained on 35B tokens and the shortest runs
 corresponding to models trained on 301M tokens.
 
 ### Instabilities in Low Precision
@@ -207,21 +206,25 @@ the gradient norm typically grows more gradually (see, e.g., examples in Appendi
 fails to decrease over time as seen in stable bfloat16 training. This behavior strongly suggests
 biased gradient estimates, a point that we will investigate further in subsequent sections.
 
+
+{% include figure.liquid path="" class="img-fluid" %}
+
+
 ## Synthetic Experiments
 
 ### Setup
 Our LM experiments with OLMo involve many potentially interacting components, and it is
 computationally expensive to determine exactly where the low-precision failure mode occurs.
 To facilitate this task, following <d-cite key="DBLP:conf/iclr/WortsmanLXEAACG24"></d-cite>, we develop a small-scale proxy
-model. Given an input $$ x ≡ A0 ∈ R dmodel $$, we consider a network composed of L residual
-layers indexed by $$ k = 0, . . . , L − 1 $$. The hidden state at each layer is computed as:
+model. Given an input $ x ≡ A0 ∈ R dmodel $, we consider a network composed of $ L $ residual
+layers indexed by $ k = 0, . . . , L − 1 $. The hidden state at each layer is computed as:
 $$
 hk = W(1)
 k LN(Ak−1), Ak = Ak−1 + W(2)
 k
 ϕ(hk), (1)
 $$
-where LN denotes layer normalization and ϕ is the activation function (e.g., ReLU, GeLU,
+where LN denotes layer normalization and $ ϕ $ is the activation function (e.g., ReLU, GeLU,
 SwiGLU). Each residual block contains two weight matrices: $$ W(1)k $$
 projects to the hidden dimension, and $$ W(2)k $$ projects back to dmodel. By default, the hidden size is set to $$ 4d_{model}^2 $$
 This student/proxy model is only useful insofar as it (at least partially) mimics the failure
@@ -241,7 +244,7 @@ The targets are generated by a fixed auxiliary/teacher model that serves as a su
 complex learnable function <d-cite key="lin2025scalinglawslinearregression"></d-cite>, and whose architecture can be taken to be
 the same as the student’s without the layer normalization. For sweeps where we change the
 depth and width of the student, we similarly scale the teacher model. A small Gaussian label
-noise (σ = 10−3) is added to the outputs. The inputs x are drawn i.i.d. from a standard
+noise ($σ = 10^{−3}$) is added to the outputs. The inputs $ x $ are drawn i.i.d. from a standard
 Gaussian, without cycling, using a fixed seed to ensure consistent batch order.
 
 
@@ -275,7 +278,7 @@ In Equation (1), this corresponds to varying $$ ϕ(·) $$ and including the pres
 
 In Figure 2a, we observe that with layer normalization enabled, both GeLU and SwiGLU
 activations exhibit instability in low precision, with SwiGLU being significantly more prone
-to divergence. This is consistent with the findings of  <d-cite key="fishman2024scaling"></d-cite> Fishman et al. (2024), though our
+to divergence. This is consistent with the findings of  <d-cite key="fishman2024scaling"></d-cite>, though our
 results show that SwiGLU also destabilizes training in high precision, suggesting that it
 generally increases stochasticity at least for this particular choice of hyperparameters, though
 these instabilities are generally recoverable in high precision. We observe two irrecoverable
@@ -303,8 +306,7 @@ when the shared scale explicitly puts nearly all values within a representable r
 To understand this, we begin by examining a concrete example of MXFP8 E4M3 as specified
 in <d-cite key="ocp_mx"></d-cite>. The left panel of Fig. 3 plots the relative gap $$ (xt+1−xt)/xt $$
 between successive positive codes in this format, ordered from index 0 (the smallest subnormal, $$ 2−9 $$) up to index 125 (448). The index stops at 125, rather than the expected
-2
-7 − 1 = 127, because S 1111 1112 is reserved for the NaN symbol, which would otherwise
+$ 2^7 − 1 = 127 $, because S 1111 1112 is reserved for the NaN symbol, which would otherwise
 correspond to a value of 480, and S 0000 0002 is the zero code, leaving 126 remaining
 codes <d-cite key="ocp_mx"></d-cite>. We can note the following:
 
@@ -376,7 +378,7 @@ that adapt to skewed or tightly clustered distributions.
 
 
 
-{% include figure.liquid path="assets/img/2026-04-27-distill-example/iclr.png" class="img-fluid" %}
+{% include figure.liquid path="" class="img-fluid" %}
 
 
 
@@ -478,11 +480,6 @@ mermaid:
 
 
 
-```mermaid
-    participant Alice
-    Alice->>John: Hello John, how are you?
-```
-
 
 
 
@@ -496,7 +493,6 @@ mermaid:
   <p>.l-body</p>
 </div>
 
- try `.l-page`:
 
 <div class="fake-img l-page">
   <p>.l-page</p>
@@ -530,27 +526,9 @@ mermaid:
 
  _asterisks_ (`*asterisks*`) or _underscores_ (`_underscores_`).
 
- **asterisks** or **underscores**.
-
- **asterisks and _underscores_**.
 
 
 
-1. 
-2. 
-
-- 
-
-1. 
-   1. 
-2. 
-  
-
-- 
-
-* 
-
-- 
 
 
 
@@ -574,10 +552,7 @@ mermaid:
 
 
 
-```javascript
-var s = "JavaScript syntax highlighting";
-alert(s);
-```
+
 
 
 
