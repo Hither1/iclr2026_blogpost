@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: A Mechanistic Analysis of Low-Precision Instabilities in Microscaling Formats
-description: Training large language models is expensive and compute-bound, and it must be repeated as models scale, algorithms improve, and new data is collected. To address this, next-generation hardware accelerators like NVIDIA’s Blackwell increasingly support lower-precision arithmetic formats, including Microscaling (MX) formats. In this work, we investigate the challenges and viability of block-scaled precision formats during model training. Across a broad sweep of weight-activation precision combinations and compute budgets from ( 2 \times 10^{17} ) to ( 4.8 \times 10^{19} ) FLOPs, we generally observe that training in MX formats exhibits sharp, stochastic instabilities in the loss, particularly at larger compute scales. To explain this phenomenon, we conduct controlled experiments and ablations on a smaller proxy model that exhibits instability behavior similar to the language model, sweeping across architectural settings, hyperparameters, and precision formats. These experiments motivate a simple model in which multiplicative gradient bias introduced by the quantization of layer-norm affine parameters and a small fraction of activations can trigger runaway divergence. Through \textit{in situ} intervention experiments on our proxy model, we demonstrate that instabilities can be averted or delayed by modifying precision schemes mid-training. Guided by these findings, we evaluate stabilization strategies in the LLM setting and show that certain hybrid configurations recover performance competitive with full-precision training.
+description: Training large language models is expensive and compute-bound, and it must be repeated as models scale, algorithms improve, and new data is collected. To address this, next-generation hardware accelerators like NVIDIA’s Blackwell increasingly support lower-precision arithmetic formats, including Microscaling (MX) formats. In this work, we investigate the challenges and viability of block-scaled precision formats during model training. Across a broad sweep of weight-activation precision combinations and compute budgets from $$ 2 \times 10^{17} $$ to $$ 4.8 \times 10^{19} $$ FLOPs, we generally observe that training in MX formats exhibits sharp, stochastic instabilities in the loss, particularly at larger compute scales. To explain this phenomenon, we conduct controlled experiments and ablations on a smaller proxy model that exhibits instability behavior similar to the language model, sweeping across architectural settings, hyperparameters, and precision formats. These experiments motivate a simple model in which multiplicative gradient bias introduced by the quantization of layer-norm affine parameters and a small fraction of activations can trigger runaway divergence. Through _in situ_ intervention experiments on our proxy model, we demonstrate that instabilities can be averted or delayed by modifying precision schemes mid-training. Guided by these findings, we evaluate stabilization strategies in the LLM setting and show that certain hybrid configurations recover performance competitive with full-precision training.
 date: 2026-04-27
 future: true
 htmlwidgets: true
@@ -44,7 +44,6 @@ bibliography: 2026-04-27-mechanistic.bib
 
 
 #   - make sure that TOC names match the actual section names
-#     for hyperlinks within the post to work correctly.
 #   - please use this format rather than manually creating a markdown table of contents.
 toc:
   - name: 
@@ -375,9 +374,6 @@ that adapt to skewed or tightly clustered distributions.
 
 
 
-<!-- ```markdown
-{% raw %}{% include figure.liquid path="assets/img/2026-04-27-distill-example/iclr.png" class="img-fluid" %}{% endraw %}
-``` -->
 
 
 {% include figure.liquid path="assets/img/2026-04-27-distill-example/iclr.png" class="img-fluid" %}
@@ -421,12 +417,9 @@ that adapt to skewed or tightly clustered distributions.
 
 
 
-<!-- ```markdown
-{% raw %}{% include [FIGURE_NAME].html %}{% endraw %}
-```
 
 
-```python
+<!-- ```python
 import pandas as pd
 import plotly.express as px
 
@@ -436,7 +429,7 @@ fig = px.density_mapbox(
 fig.show()
 
 fig.write_html('./assets/html/2026-04-27-distill-example/plotly_demo_1.html')
-``` -->
+```  -->
 
 
 
@@ -471,13 +464,7 @@ fig.write_html('./assets/html/2026-04-27-distill-example/plotly_demo_1.html')
 
 
 
-{% highlight c++ linenos %} <br/> coe <br/> {% endhighlight %}
-{% endraw %}
 
-{% highlight c++ %}
-
-
-{% endhighlight %}
 
  [mermaid.js](https://mermaid-js.github.io/mermaid/){:target="\_blank"} directly.
  [](){:target="\_blank"} syntax.
