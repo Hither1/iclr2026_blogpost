@@ -1,9 +1,7 @@
 ---
 layout: distill
-title: Sample Blog Post
-description: Your blog post's abstract.
-  Please add your abstract or summary here and not in the main body of your text.
-  Do not include math/latex or hyperlinks.
+title: A Mechanistic Analysis of Low-Precision Instabilities in Microscaling Formats
+description: Training large language models is expensive and compute-bound, and it must be repeated as models scale, algorithms improve, and new data is collected. To address this, next-generation hardware accelerators like NVIDIA’s Blackwell increasingly support lower-precision arithmetic formats, including Microscaling (MX) formats. In this work, we investigate the challenges and viability of block-scaled precision formats during model training. Across a broad sweep of weight-activation precision combinations and compute budgets from ( 2 \times 10^{17} ) to ( 4.8 \times 10^{19} ) FLOPs, we generally observe that training in MX formats exhibits sharp, stochastic instabilities in the loss, particularly at larger compute scales. To explain this phenomenon, we conduct controlled experiments and ablations on a smaller proxy model that exhibits instability behavior similar to the language model, sweeping across architectural settings, hyperparameters, and precision formats. These experiments motivate a simple model in which multiplicative gradient bias introduced by the quantization of layer-norm affine parameters and a small fraction of activations can trigger runaway divergence. Through \textit{in situ} intervention experiments on our proxy model, we demonstrate that instabilities can be averted or delayed by modifying precision schemes mid-training. Guided by these findings, we evaluate stabilization strategies in the LLM setting and show that certain hybrid configurations recover performance competitive with full-precision training.
 date: 2026-04-27
 future: true
 htmlwidgets: true
@@ -15,42 +13,50 @@ mermaid:
   zoomable: true
 
 # Anonymize when submitting
-# authors:
-#   - name: Anonymous
-
 authors:
-  - name: Albert Einstein
-    url: "https://en.wikipedia.org/wiki/Albert_Einstein"
-    affiliations:
-      name: IAS, Princeton
-  - name: Boris Podolsky
-    url: "https://en.wikipedia.org/wiki/Boris_Podolsky"
-    affiliations:
-      name: IAS, Princeton
-  - name: Nathan Rosen
-    url: "https://en.wikipedia.org/wiki/Nathan_Rosen"
-    affiliations:
-      name: IAS, Princeton
+  - name: Anonymous
+
+# authors:
+#   - name: 
+#     url: ""
+#     affiliations:
+#       name: IAS, Princeton
+#   - name: Boris Podolsky
+#     url: ""
+#     affiliations:
+#       name: IAS, Princeton
+#   - name: 
+#     url: ""
+#     affiliations:
+#       name: IAS, Princeton
+#   - name: 
+#     url: ""
+#     affiliations:
+#       name: IAS, Princeton
+#   - name: 
+#     url: ""
+#     affiliations:
+#       name: 
+
 
 # must be the exact same name as your blogpost
-bibliography: 2026-04-27-distill-example.bib
+bibliography: 2026-04-27-mechanistic.bib
 
 # Add a table of contents to your post.
 #   - make sure that TOC names match the actual section names
 #     for hyperlinks within the post to work correctly.
 #   - please use this format rather than manually creating a markdown table of contents.
 toc:
-  - name: Equations
-  - name: Images and Figures
+  - name: 
+  - name: 
     subsections:
       - name: Interactive Figures
-  - name: Citations
-  - name: Footnotes
-  - name: Code Blocks
-  - name: Diagrams
-  - name: Tweets
-  - name: Layouts
-  - name: Other Typography?
+  - name: 
+  - name: 
+  - name: 
+  - name: 
+  - name: 
+  - name: 
 
 # Below is an example of injecting additional post-specific styles.
 # This is used in the 'Layouts' section of this post.
@@ -72,15 +78,10 @@ _styles: >
   }
 ---
 
-Note: please use the table of contents as defined in the front matter rather than the traditional markdown styling.
 
-## Equations
 
-This theme supports rendering beautiful math in inline and display modes using [MathJax 3](https://www.mathjax.org/) engine.
-You just need to surround your math expression with `$$`, like `$$ E = mc^2 $$`.
-If you leave it inside a paragraph, it will produce an inline expression, just like $$ E = mc^2 $$.
 
-To use display mode, again surround your expression with `$$` and place it as a separate paragraph.
+ `$$` and place it as a separate paragraph.
 Here is an example:
 
 $$
@@ -93,25 +94,19 @@ that brought a significant improvement to the loading and rendering speed, which
 
 ## Images and Figures
 
-Its generally a better idea to avoid linking to images hosted elsewhere - links can break and you
-might face losing important information in your blog post.
-To include images in your submission in this way, you must do something like the following:
 
-```markdown
+<!-- ```markdown
 {% raw %}{% include figure.liquid path="assets/img/2026-04-27-distill-example/iclr.png" class="img-fluid" %}{% endraw %}
-```
+``` -->
 
-which results in the following image:
 
 {% include figure.liquid path="assets/img/2026-04-27-distill-example/iclr.png" class="img-fluid" %}
 
 To ensure that there are no namespace conflicts, you must save your asset to your unique directory
 `/assets/img/2025-04-27-[SUBMISSION NAME]` within your submission.
 
-Please avoid using the direct markdown method of embedding images; they may not be properly resized.
-Some more complex ways to load images (note the different styles of the shapes/shadows):
 
-<div class="row mt-3">
+<!-- <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid path="assets/img/2026-04-27-distill-example/9.jpg" class="img-fluid rounded z-depth-1" %}
     </div>
@@ -142,11 +137,10 @@ Some more complex ways to load images (note the different styles of the shapes/s
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid path="assets/img/2026-04-27-distill-example/7.jpg" class="img-fluid" %}
     </div>
-</div>
+</div> -->
 
-### Interactive Figures
 
-Here's how you could embed interactive figures that have been exported as HTML files.
+
 Note that we will be using plotly for this demo, but anything built off of HTML should work
 (**no extra javascript is allowed!**).
 All that's required is for you to export your figure into HTML format, and make sure that the file
@@ -173,7 +167,7 @@ fig.show()
 fig.write_html('./assets/html/2026-04-27-distill-example/plotly_demo_1.html')
 ```
 
-And then include it with the following:
+
 
 ```html
 {% raw %}
@@ -189,17 +183,12 @@ And then include it with the following:
 {% endraw %}
 ```
 
-Voila!
+
 
 <div class="l-page">
   <iframe src="{{ 'assets/html/2026-04-27-distill-example/plotly_demo_1.html' | relative_url }}" frameborder='0' scrolling='no' height="600px" width="100%"></iframe>
 </div>
 
-## Citations
-
-Citations are then used in the article body with the `<d-cite>` tag.
-The key attribute is a reference to the id provided in the bibliography.
-The key attribute can take multiple ids, separated by commas.
 
 The citation is presented inline like this: <d-cite key="gregor2015draw"></d-cite> (a number that displays more information on hover).
 If you have an appendix, a bibliography is automatically created and populated in it.
