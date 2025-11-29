@@ -207,7 +207,13 @@ fails to decrease over time as seen in stable bfloat16 training. This behavior s
 biased gradient estimates, a point that we will investigate further in subsequent sections.
 
 
-{% include figure.liquid path="" class="img-fluid" %}
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/instability/bf16_bf16_loss.jpg" class="img-fluid" %}
+
+
+
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/instability/e5m2_e5m2_loss.jpg" class="img-fluid" %}
+
+
 
 
 ## Synthetic Experiments
@@ -219,10 +225,7 @@ To facilitate this task, following <d-cite key="DBLP:conf/iclr/WortsmanLXEAACG24
 model. Given an input $ x ≡ A0 ∈ R dmodel $, we consider a network composed of $ L $ residual
 layers indexed by $ k = 0, . . . , L − 1 $. The hidden state at each layer is computed as:
 $$
-hk = W(1)
-k LN(Ak−1), Ak = Ak−1 + W(2)
-k
-ϕ(hk), (1)
+h_k = W(1)k LN(Ak−1), A_{k} = A_{k−1} + W(2)k ϕ(hk), (1)
 $$
 where LN denotes layer normalization and $ ϕ $ is the activation function (e.g., ReLU, GeLU,
 SwiGLU). Each residual block contains two weight matrices: $$ W(1)k $$
@@ -268,7 +271,11 @@ runs are stable, but low precision is not (at least for a canonical choice of ac
 such as GeLU). For the same reason, we fix a moderately large batch size (2048) throughout
 to reduce variance in gradient estimates.
 
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/synthetic/fp8_act_with_ln.pdf" class="img-fluid" %}
 
+
+
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/synthetic/fp8_act_without_ln.pdf" class="img-fluid" %}
 
 ### The Effect of Activation Functions and layernorms
 
@@ -292,6 +299,9 @@ precision runs (for the same choice of hyperparameters in Figure 2a). At first g
 results are perplexing since it appears that low precision is more robust to removal of
 layernorms. We will return to this point in Section 5 when we explicate the subtleties of
 layernorms in block scaling formats.
+
+
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/instability/layernorm_act_overflow.jpg" class="img-fluid" %}
 
 
 ## Overflow Dynamics
@@ -336,6 +346,9 @@ the precision of layer norms or activations, can greatly improve stability.
 
 
 
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/synthetic/interventions_synthetic.jpg" class="img-fluid" %}
+
+
 ##  Stabilization Strategies in LM Setting
 Motivated by the effective mitigations observed in our synthetic experiments, we return
 to the language-model (OLMo) setting and consider two training strategies: (1) retaining
@@ -359,6 +372,9 @@ strategies compared to bfloat16 baselines are also provided in Appendix G.
 
 
 
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/synthetic/zeta_stab_plots.pdf" class="img-fluid" %}
+
+
 ## Conclusion
 We showed that training LLMs in shared-scale/MX configurations can lead to sharp, unrecoverable instabilities. Using large-scale LLM sweeps and a simple proxy model trained
 on synthetic data, we isolate a failure mode of quantization-induced gradient bias, where
@@ -376,19 +392,26 @@ that adapt to skewed or tightly clustered distributions.
 
 
 
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/synthetic/fp8_fp6_lr_sweep_loss.pdf" class="img-fluid" %}
 
 
-{% include figure.liquid path="" class="img-fluid" %}
 
+
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/synthetic/fp32_vs_mx_with_without_attn.pdf" class="img-fluid" %}
+
+
+
+
+{% include figure.liquid path="assets/img/2026-04-27-mechanistic/final_figs/synthetic/with_without_ce.pdf" class="img-fluid" %}
 
 
 
 <!-- <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid path="assets/img/2026-04-27-distill-example/9.jpg" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid path="" class="img-fluid rounded z-depth-1" %}
     </div>
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid path="assets/img/2026-04-27-distill-example/7.jpg" class="img-fluid rounded z-depth-1" %}
+        {% include figure.liquid path="" class="img-fluid rounded z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -397,19 +420,19 @@ that adapt to skewed or tightly clustered distributions.
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid path="assets/img/2026-04-27-distill-example/8.jpg" class="img-fluid z-depth-2" %}
+        {% include figure.liquid path="" class="img-fluid z-depth-2" %}
     </div>
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid path="assets/img/2026-04-27-distill-example/10.jpg" class="img-fluid z-depth-2" %}
+        {% include figure.liquid path="" class="img-fluid z-depth-2" %}
     </div>
 </div>
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid path="assets/img/2026-04-27-distill-example/11.jpg" class="img-fluid"  %}
+        {% include figure.liquid path="" class="img-fluid"  %}
     </div>
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid path=".jpg" class="img-fluid" %}
+        {% include figure.liquid path="" class="img-fluid" %}
     </div>
     <div class="col-sm mt-3 mt-md-0">
         {% include figure.liquid path="" class="img-fluid" %}
@@ -439,7 +462,7 @@ fig.write_html('./assets/html/2026-04-27-distill-example/plotly_demo_1.html')
 {% raw %}
 <div class="l-page">
   <iframe
-    src="{{ 'assets/html/2026-04-27-distill-example/plotly_demo_1.html' | relative_url }}"
+    src="{{ 'assets/html/2026-04-27-.html' | relative_url }}"
     frameborder="0"
     scrolling="no"
     height="600px"
@@ -452,7 +475,7 @@ fig.write_html('./assets/html/2026-04-27-distill-example/plotly_demo_1.html')
 
 
 <div class="l-page">
-  <iframe src="{{ 'assets/html/2026-04-27-distill-example/plotly_demo_1.html' | relative_url }}" frameborder='0' scrolling='no' height="600px" width="100%"></iframe>
+  <iframe src="{{ 'assets/html/2026-04-27-.html' | relative_url }}" frameborder='0' scrolling='no' height="600px" width="100%"></iframe>
 </div>
 
 
@@ -524,8 +547,6 @@ mermaid:
 ---
 
 
- _asterisks_ (`*asterisks*`) or _underscores_ (`_underscores_`).
-
 
 
 
@@ -535,7 +556,7 @@ mermaid:
 <!-- [](https://www.google.com "Google's Homepage") -->
 
 
-[][1]
+
 
 
 
@@ -560,7 +581,7 @@ mermaid:
 | ------------- | :-----------: | ----: |
 |       |  |  |
 |       |       |    |
-|  |       |    $1 |
+|  |       |     |
 
 
 
@@ -568,6 +589,6 @@ mermaid:
 | Markdown | Less      | Pretty     |
 | -------- | --------- | ---------- |
 | _Still_  |  |  |
-| 1        | 2         | 3          |
+|         |          |           |
 
 
